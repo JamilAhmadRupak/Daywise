@@ -1,5 +1,6 @@
 package com.daywise.app.ui.screens.reports
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,6 +42,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
+import java.time.LocalDate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -49,6 +56,7 @@ import com.daywise.app.ui.components.AddEditExpenseSheet
 import com.daywise.app.ui.components.CategoryDonutChart
 import com.daywise.app.ui.components.ConfirmDeleteDialog
 import com.daywise.app.ui.components.DailySpendingBarChart
+import com.daywise.app.ui.components.DaywiseCard
 import com.daywise.app.ui.components.ExpenseItemCard
 import com.daywise.app.ui.components.SetBudgetDialog
 
@@ -59,10 +67,17 @@ fun ReportsScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    val exportCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        uri?.let { viewModel.exportMonthCsv(context, it) }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = Color.Transparent
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -73,25 +88,38 @@ fun ReportsScreen(
         ) {
             item {
                 Spacer(modifier = Modifier.height(4.dp))
-                // Screen Title
-                Text(
-                    text = "Monthly Reports",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Monthly Reports",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
                     )
-                )
+                    IconButton(onClick = { 
+                        val filename = "daywise_report_${uiState.currentMonth}_${LocalDate.now()}.csv"
+                        exportCsvLauncher.launch(filename)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.FileDownload,
+                            contentDescription = "Export CSV",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
 
             // Month / Year Selector Toolbar
             item {
-                Card(
+                DaywiseCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    tintColor = Color(0xFF061424).copy(alpha = 0.60f)
                 ) {
                     Row(
                         modifier = Modifier
@@ -167,13 +195,12 @@ fun ReportsScreen(
                         )
 
                         // Budget Status Card (Interactive)
-                        Card(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable { viewModel.openBudgetDialog() },
+                        DaywiseCard(
+                            modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                            tintColor = Color(0xFF061424).copy(alpha = 0.60f),
+                            onClick = { viewModel.openBudgetDialog() }
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
                                 Row(
@@ -214,11 +241,11 @@ fun ReportsScreen(
 
             // Daily Spending Bar Chart
             item {
-                Card(
+                DaywiseCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    tintColor = Color(0xFF061424).copy(alpha = 0.58f)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -307,11 +334,11 @@ fun ReportsScreen(
 
             // Category Breakdown & Donut Chart
             item {
-                Card(
+                DaywiseCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    tintColor = Color(0xFF061424).copy(alpha = 0.58f)
                 ) {
                     Column(
                         modifier = Modifier.padding(18.dp),
@@ -336,11 +363,11 @@ fun ReportsScreen(
             // Category Breakdown Table with Amounts and Percentages
             if (uiState.categoryBreakdown.isNotEmpty()) {
                 item {
-                    Card(
+                    DaywiseCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        tintColor = Color(0xFF061424).copy(alpha = 0.58f)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
@@ -361,20 +388,20 @@ fun ReportsScreen(
                                         modifier = Modifier
                                             .size(36.dp)
                                             .clip(CircleShape)
-                                            .background(item.category.color.copy(alpha = 0.15f)),
+                                            .background(item.color.copy(alpha = 0.15f)),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
-                                            imageVector = item.category.icon,
+                                            imageVector = item.icon,
                                             contentDescription = null,
-                                            tint = item.category.color,
+                                            tint = item.color,
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
-                                            text = item.category.displayName,
+                                            text = item.displayName,
                                             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
@@ -443,11 +470,11 @@ private fun StatCard(
     accentColor: Color,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    DaywiseCard(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        tintColor = Color(0xFF061424).copy(alpha = 0.60f)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(

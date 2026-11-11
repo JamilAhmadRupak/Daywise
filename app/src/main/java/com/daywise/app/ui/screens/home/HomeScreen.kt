@@ -1,7 +1,10 @@
 package com.daywise.app.ui.screens.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -46,6 +50,7 @@ import com.daywise.app.domain.util.CurrencyFormatter
 import com.daywise.app.domain.util.DateUtils
 import com.daywise.app.ui.components.AddEditExpenseSheet
 import com.daywise.app.ui.components.ConfirmDeleteDialog
+import com.daywise.app.ui.components.DaywiseCard
 import com.daywise.app.ui.components.ExpenseItemCard
 import java.time.LocalDate
 
@@ -61,12 +66,12 @@ fun HomeScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.openAddExpense() },
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
                 Icon(
@@ -93,22 +98,28 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     DaywiseBrandHeader()
-                    Text(
-                        text = DateUtils.formatDisplayDate(DateUtils.todayMillis()),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xF2091A2E),
+                        border = BorderStroke(1.dp, Color(0x6643779E))
+                    ) {
+                        Text(
+                            text = DateUtils.formatDisplayDate(DateUtils.todayMillis()),
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = Color(0xFFD8EEFA),
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
                 }
             }
 
-            // Today's Spending Hero Card
+            // Today's Spending Hero Card (Backed by Leaf Texture)
             item {
-                Card(
+                DaywiseCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)),
+                    tintColor = Color(0xFF061424).copy(alpha = 0.40f)
                 ) {
                     Column(
                         modifier = Modifier
@@ -117,16 +128,16 @@ fun HomeScreen(
                     ) {
                         Text(
                             text = "Today's Spending",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                            color = Color(0xFFB5D4EE)
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = CurrencyFormatter.formatPaisa(uiState.todayTotalPaisa),
                             style = MaterialTheme.typography.displayLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 36.sp,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                                fontSize = 38.sp,
+                                color = Color.White
                             )
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -136,13 +147,14 @@ fun HomeScreen(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f))
+                                    .background(Color(0xFF50B5ED).copy(alpha = 0.18f))
+                                    .border(BorderStroke(1.dp, Color(0xFF50B5ED).copy(alpha = 0.40f)), RoundedCornerShape(8.dp))
                                     .padding(horizontal = 10.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = "${uiState.todayExpenseCount} ${if (uiState.todayExpenseCount == 1) "expense" else "expenses"} today",
                                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    color = Color(0xFF8DC9EC)
                                 )
                             }
                         }
@@ -152,13 +164,11 @@ fun HomeScreen(
 
             // Current Month Total & Budget Summary Card
             item {
-                Card(
+                DaywiseCard(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                    tintColor = Color(0xFF061424).copy(alpha = 0.58f)
                 ) {
                     Column(
                         modifier = Modifier
@@ -180,8 +190,8 @@ fun HomeScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "This Month's Spending",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = Color.White
                                 )
                             }
                             Text(
@@ -269,17 +279,31 @@ fun HomeScreen(
             // Recent Expenses Section Header
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = "Recent Expenses",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
-                    TextButton(onClick = onNavigateToHistory) {
-                        Text("View All")
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = Color(0xFF50B5ED).copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, Color(0xFF50B5ED).copy(alpha = 0.35f)),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { onNavigateToHistory() }
+                    ) {
+                        Text(
+                            text = "View All",
+                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = Color(0xFF50B5ED),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
                     }
                 }
             }
@@ -287,10 +311,11 @@ fun HomeScreen(
             // Recent Expense list
             if (uiState.recentExpenses.isEmpty()) {
                 item {
-                    Card(
+                    DaywiseCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        tintColor = Color(0xFF061424).copy(alpha = 0.65f)
                     ) {
                         Column(
                             modifier = Modifier

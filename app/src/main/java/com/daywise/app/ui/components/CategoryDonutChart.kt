@@ -27,8 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,9 +39,12 @@ import com.daywise.app.data.model.ExpenseCategory
 import com.daywise.app.domain.util.CurrencyFormatter
 
 data class CategorySpending(
-    val category: ExpenseCategory,
+    val category: ExpenseCategory = ExpenseCategory.OTHERS,
     val amountPaisa: Long,
-    val percentage: Float
+    val percentage: Float,
+    val displayName: String = category.displayName,
+    val color: Color = category.color,
+    val icon: ImageVector = category.icon
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -86,7 +91,7 @@ fun CategoryDonutChart(
                     val sweepAngle = (item.percentage / 100f) * 360f * animProgress.value
                     if (sweepAngle > 0f) {
                         drawArc(
-                            color = item.category.color,
+                            color = item.color,
                             startAngle = currentStartAngle,
                             sweepAngle = sweepAngle,
                             useCenter = false,
@@ -139,11 +144,11 @@ fun CategoryDonutChart(
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(item.category.color)
+                            .background(item.color)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "${item.category.displayName} (${String.format(java.util.Locale.US, "%.1f", item.percentage)}%)",
+                        text = "${item.displayName} (${String.format(java.util.Locale.US, "%.1f", item.percentage)}%)",
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 12.sp),
                         color = MaterialTheme.colorScheme.onSurface
                     )

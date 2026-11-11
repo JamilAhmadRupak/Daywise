@@ -70,6 +70,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
+    implementation("net.objecthunter:exp4j:0.4.8")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

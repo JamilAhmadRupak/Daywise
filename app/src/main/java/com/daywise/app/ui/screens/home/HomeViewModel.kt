@@ -123,7 +123,7 @@ class HomeViewModel(
 
     fun saveExpense(
         amountPaisa: Long,
-        category: ExpenseCategory,
+        category: String,
         dateMillis: Long,
         note: String
     ) {
@@ -133,20 +133,29 @@ class HomeViewModel(
                 repository.updateExpense(
                     id = editing.id,
                     amountPaisa = amountPaisa,
-                    category = category.name,
+                    category = category,
                     dateMillis = dateMillis,
                     note = note
                 )
             } else {
                 repository.insertExpense(
                     amountPaisa = amountPaisa,
-                    category = category.name,
+                    category = category,
                     dateMillis = dateMillis,
                     note = note
                 )
             }
             closeAddEditSheet()
         }
+    }
+
+    fun saveExpense(
+        amountPaisa: Long,
+        category: ExpenseCategory,
+        dateMillis: Long,
+        note: String
+    ) {
+        saveExpense(amountPaisa, category.name, dateMillis, note)
     }
 
     fun confirmDeleteExpense(expense: ExpenseEntity) {

@@ -32,6 +32,9 @@ fun DaywiseLogoBadge(
     size: Dp = 40.dp,
     modifier: Modifier = Modifier
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val containerColor = MaterialTheme.colorScheme.primaryContainer
+
     Box(
         modifier = modifier
             .size(size)
@@ -39,8 +42,8 @@ fun DaywiseLogoBadge(
             .background(
                 Brush.linearGradient(
                     listOf(
-                        Color(0xFF10B981), // Emerald
-                        Color(0xFF059669)  // Deep green
+                        primaryColor,
+                        containerColor
                     )
                 )
             ),
@@ -48,7 +51,7 @@ fun DaywiseLogoBadge(
     ) {
         Text(
             text = "৳",
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onPrimary,
             fontWeight = FontWeight.Bold,
             fontSize = (size.value * 0.58f).sp,
             modifier = Modifier.align(Alignment.Center)

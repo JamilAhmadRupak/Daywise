@@ -14,11 +14,18 @@ class DaywiseApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         database = DaywiseDatabase.getInstance(this)
         repository = ExpenseRepository(
             expenseDao = database.expenseDao(),
             budgetDao = database.budgetDao(),
-            debtDao = database.debtDao()
+            debtDao = database.debtDao(),
+            categoryDao = database.categoryDao()
         )
+    }
+
+    companion object {
+        lateinit var instance: DaywiseApplication
+            private set
     }
 }

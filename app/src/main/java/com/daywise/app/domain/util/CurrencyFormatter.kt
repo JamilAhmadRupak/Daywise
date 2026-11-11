@@ -3,6 +3,7 @@ package com.daywise.app.domain.util
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import net.objecthunter.exp4j.ExpressionBuilder
 
 /**
  * Monetary formatting for Bangladeshi Taka (৳).
@@ -49,36 +50,42 @@ object CurrencyFormatter {
     }
 
     /**
-     * Parses a user input string (e.g., "500", "500.50", " 1,200 ") to Long paisa.
+     * Parses a user input string (e.g., "500", "500.50", " 100+50-20*2 ", "100+50-20×2") to Long paisa.
      * Returns null if the string is empty or invalid.
      */
     fun parseAmountToPaisa(input: String): Long? {
-        val cleaned = input.trim().replace(",", "").replace("৳", "").trim()
+        val cleaned = input.trim()
+            .replace(",", "")
+            .replace("৳", "")
+            .replace("×", "*")
+            .replace("÷", "/")
+            .trim()
         if (cleaned.isEmpty()) return null
 
         return try {
-            val parts = cleaned.split(".")
-            if (parts.size > 2) return null
+            val expression = ExpressionBuilder(cleaned).build()
+            val result = expression.evaluate()
 
-            val takaPart = parts[0].toLongOrNull() ?: return null
-            if (takaPart < 0) return null
+            if (result < 0 || result.isInfinite() || result.isNaN()) return null
 
-            val paisaPart = if (parts.size == 2) {
-                val frac = parts[1]
-                when {
-                    frac.length == 1 -> frac.toLong() * 10
-                    frac.length == 2 -> frac.toLong()
-                    frac.length > 2 -> frac.substring(0, 2).toLong() // truncate to 2 decimals
-                    else -> 0L
-                }
-            } else {
-                0L
-            }
-
-            (takaPart * 100) + paisaPart
+            // Round to 2 decimal places and multiply by 100 to get paisa
+            val paisa = Math.round(result * 100.0)
+            paisa
         } catch (e: Exception) {
             null
         }
+    }
+
+    /**
+     * Evaluates math expressions on the fly and returns a formatted preview string (e.g. "= ৳110" or "= ৳110.50").
+     * Returns null if input has no math operators or if expression is incomplete/invalid.
+     */
+    fun evaluateExpressionPreview(input: String): String? {
+        val hasOperator = input.any { it in "+-*/×÷" }
+        if (!hasOperator) return null
+
+        val paisa = parseAmountToPaisa(input) ?: return null
+        return "= " + formatPaisa(paisa)
     }
 
     /**

@@ -1,5 +1,8 @@
 package com.daywise.app.ui.navigation
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,6 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.daywise.app.R
 import com.daywise.app.data.repository.ExpenseRepository
 import com.daywise.app.ui.screens.debts.DebtsScreen
 import com.daywise.app.ui.screens.debts.DebtsViewModel
@@ -42,11 +49,26 @@ fun DaywiseNavHost(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: Screen.Home.route
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.wood_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        // Dark vignette scrim so wood grain texture is visible with luxurious depth & text pops
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF040A14).copy(alpha = 0.45f))
+        )
+
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            bottomBar = {
             NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = Color(0xF2091A2E),
                 tonalElevation = 8.dp
             ) {
                 Screen.getBottomNavItems().forEach { screen ->
@@ -154,4 +176,5 @@ fun DaywiseNavHost(
             }
         }
     }
+}
 }

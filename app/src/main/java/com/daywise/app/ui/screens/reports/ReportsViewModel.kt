@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import android.content.Context
+import android.net.Uri
+import android.widget.Toast
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -98,14 +101,18 @@ class ReportsViewModel(
             val highestDaySpending = dailyList.filter { it.amountPaisa > 0 }.maxByOrNull { it.amountPaisa }
 
             // Category breakdown for donut chart
-            val expensesByCategory = expenses.groupBy { ExpenseCategory.fromName(it.category) }
-            val categoryList = expensesByCategory.map { (cat, list) ->
+            val expensesByCategory = expenses.groupBy { it.category }
+            val categoryList = expensesByCategory.map { (catName, list) ->
+                val catModel = com.daywise.app.data.model.CategoryModel.resolve(catName)
                 val catSum = list.sumOf { it.amountPaisa }
                 val pct = if (totalSpending > 0L) (catSum.toFloat() / totalSpending) * 100f else 0f
                 CategorySpending(
-                    category = cat,
+                    category = ExpenseCategory.fromName(catName),
                     amountPaisa = catSum,
-                    percentage = pct
+                    percentage = pct,
+                    displayName = catModel.displayName,
+                    color = catModel.color,
+                    icon = catModel.icon
                 )
             }.sortedByDescending { it.amountPaisa }
 
@@ -196,20 +203,24 @@ class ReportsViewModel(
         )
     }
 
-    fun saveExpense(amountPaisa: Long, category: ExpenseCategory, dateMillis: Long, note: String) {
+    fun saveExpense(amountPaisa: Long, category: String, dateMillis: Long, note: String) {
         viewModelScope.launch {
             val editing = _dialogState.value.editingExpense
             if (editing != null) {
                 repository.updateExpense(
                     id = editing.id,
                     amountPaisa = amountPaisa,
-                    category = category.name,
+                    category = category,
                     dateMillis = dateMillis,
                     note = note
                 )
             }
             closeAddEditSheet()
         }
+    }
+
+    fun saveExpense(amountPaisa: Long, category: ExpenseCategory, dateMillis: Long, note: String) {
+        saveExpense(amountPaisa, category.name, dateMillis, note)
     }
 
     fun confirmDeleteExpense(expense: ExpenseEntity) {
@@ -225,6 +236,19 @@ class ReportsViewModel(
         viewModelScope.launch {
             repository.deleteExpense(target.id)
             cancelDeleteExpense()
+        }
+    }
+
+    fun exportMonthCsv(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            try {
+                context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    repository.exportMonthCsv(outputStream, _selectedMonth.value)
+                }
+                Toast.makeText(context, "Monthly Report Exported!", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Export failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
         }
     }
 

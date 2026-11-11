@@ -1,6 +1,8 @@
 package com.daywise.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.daywise.app.data.model.ExpenseCategory
+import com.daywise.app.data.model.CategoryModel
 import com.daywise.app.data.model.ExpenseEntity
 import com.daywise.app.domain.util.CurrencyFormatter
 
@@ -42,17 +44,14 @@ fun ExpenseItemCard(
     onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val category = ExpenseCategory.fromName(expense.category)
+    val category = CategoryModel.resolve(expense.category)
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+    DaywiseCard(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        tintColor = Color(0xFF061424).copy(alpha = 0.65f),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -60,12 +59,13 @@ fun ExpenseItemCard(
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Category Icon with tinted circle background
+            // Category Icon with tinted circle background & glowing border
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(category.color.copy(alpha = 0.15f)),
+                    .background(category.color.copy(alpha = 0.22f))
+                    .border(BorderStroke(1.dp, category.color.copy(alpha = 0.40f)), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -84,8 +84,8 @@ fun ExpenseItemCard(
             ) {
                 Text(
                     text = category.displayName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -93,7 +93,7 @@ fun ExpenseItemCard(
                     Text(
                         text = expense.note,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color(0xFF9EBCD4),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -109,7 +109,7 @@ fun ExpenseItemCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 17.sp
                 ),
-                color = MaterialTheme.colorScheme.onSurface
+                color = Color.White
             )
 
             // Optional Quick Actions
@@ -123,7 +123,7 @@ fun ExpenseItemCard(
                         Icon(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = "Edit",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = Color(0xFF9EBCD4),
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -136,7 +136,7 @@ fun ExpenseItemCard(
                         Icon(
                             imageVector = Icons.Outlined.Delete,
                             contentDescription = "Delete",
-                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                            tint = Color(0xFFF87171),
                             modifier = Modifier.size(18.dp)
                         )
                     }

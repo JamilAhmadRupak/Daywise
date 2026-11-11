@@ -28,9 +28,24 @@ class CurrencyFormatterTest {
         assertEquals(50050L, CurrencyFormatter.parseAmountToPaisa("500.5"))
         assertEquals(150000L, CurrencyFormatter.parseAmountToPaisa("1,500"))
         assertEquals(150000L, CurrencyFormatter.parseAmountToPaisa("৳ 1,500"))
+        // Mathematical expression evaluations
+        assertEquals(11000L, CurrencyFormatter.parseAmountToPaisa("100+50-20*2"))
+        assertEquals(11000L, CurrencyFormatter.parseAmountToPaisa("100 + 50 - 20 × 2"))
+        assertEquals(15000L, CurrencyFormatter.parseAmountToPaisa("(100 + 50)"))
+        assertEquals(2500L, CurrencyFormatter.parseAmountToPaisa("100 / 4"))
+        assertEquals(2500L, CurrencyFormatter.parseAmountToPaisa("100 ÷ 4"))
+        assertNull(CurrencyFormatter.parseAmountToPaisa("100 - 200")) // Negative result
         assertNull(CurrencyFormatter.parseAmountToPaisa(""))
         assertNull(CurrencyFormatter.parseAmountToPaisa("abc"))
         assertNull(CurrencyFormatter.parseAmountToPaisa("-100"))
+    }
+
+    @Test
+    fun testEvaluateExpressionPreview() {
+        assertEquals("= ৳110", CurrencyFormatter.evaluateExpressionPreview("100+50-20*2"))
+        assertEquals("= ৳110", CurrencyFormatter.evaluateExpressionPreview("100 + 50 - 20 × 2"))
+        assertNull(CurrencyFormatter.evaluateExpressionPreview("500")) // Regular number, no preview needed
+        assertNull(CurrencyFormatter.evaluateExpressionPreview("100+")) // Incomplete expression
     }
 
     @Test

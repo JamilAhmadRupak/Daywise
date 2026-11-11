@@ -1,5 +1,6 @@
 package com.daywise.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -50,21 +51,15 @@ fun DebtItemCard(
     modifier: Modifier = Modifier
 ) {
     val isLent = debt.type == DebtType.LENT.name
-    val badgeColor = if (isLent) Color(0xFF10B981) else Color(0xFFF97316)
+    val badgeColor = if (isLent) MaterialTheme.colorScheme.primary else Color(0xFFF97316)
     val badgeContainerColor = badgeColor.copy(alpha = 0.15f)
     val badgeText = if (isLent) "Lent (To Receive)" else "Borrowed (To Pay)"
 
-    Card(
+    DaywiseCard(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (debt.isSettled) {
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)
-            } else {
-                MaterialTheme.colorScheme.surface
-            }
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (debt.isSettled) 0.dp else 1.dp)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        tintColor = if (debt.isSettled) Color(0xFF040E1B).copy(alpha = 0.82f) else Color(0xFF061424).copy(alpha = 0.65f)
     ) {
         Column(
             modifier = Modifier
@@ -99,7 +94,7 @@ fun DebtItemCard(
                                 fontWeight = FontWeight.Bold,
                                 textDecoration = if (debt.isSettled) TextDecoration.LineThrough else null
                             ),
-                            color = if (debt.isSettled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                            color = if (debt.isSettled) Color(0xFF9EBCD4) else Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -140,7 +135,7 @@ fun DebtItemCard(
                 Text(
                     text = debt.note,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFF9EBCD4)
                 )
             }
 
@@ -161,7 +156,7 @@ fun DebtItemCard(
                 Text(
                     text = dateLabel,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                    color = Color(0xFF9EBCD4).copy(alpha = 0.85f),
                     modifier = Modifier.weight(1f)
                 )
 
@@ -173,7 +168,7 @@ fun DebtItemCard(
                     Icon(
                         imageVector = Icons.Outlined.Edit,
                         contentDescription = "Edit",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = Color(0xFF9EBCD4),
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -186,7 +181,7 @@ fun DebtItemCard(
                     Icon(
                         imageVector = Icons.Outlined.Delete,
                         contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
+                        tint = Color(0xFFF87171),
                         modifier = Modifier.size(18.dp)
                     )
                 }

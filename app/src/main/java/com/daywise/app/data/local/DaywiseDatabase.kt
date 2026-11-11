@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.daywise.app.data.model.CustomCategoryEntity
 import com.daywise.app.data.model.DebtEntity
 import com.daywise.app.data.model.ExpenseEntity
 import com.daywise.app.data.model.MonthlyBudgetEntity
@@ -14,9 +15,10 @@ import com.daywise.app.data.model.MonthlyBudgetEntity
     entities = [
         ExpenseEntity::class,
         MonthlyBudgetEntity::class,
-        DebtEntity::class
+        DebtEntity::class,
+        CustomCategoryEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class DaywiseDatabase : RoomDatabase() {
@@ -24,6 +26,7 @@ abstract class DaywiseDatabase : RoomDatabase() {
     abstract fun expenseDao(): ExpenseDao
     abstract fun budgetDao(): BudgetDao
     abstract fun debtDao(): DebtDao
+    abstract fun categoryDao(): CategoryDao
 
     companion object {
         private const val DATABASE_NAME = "daywise_expenses.db"
@@ -59,6 +62,25 @@ abstract class DaywiseDatabase : RoomDatabase() {
             }
         }
 
+        /**
+         * Migration from Schema 2 to 3:
+         * Adds 'custom_categories' table for user-defined expense categories.
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `custom_categories` (
+                        `name` TEXT PRIMARY KEY NOT NULL,
+                        `color_hex` INTEGER NOT NULL,
+                        `icon_name` TEXT NOT NULL,
+                        `created_at` INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
+            }
+        }
+
         fun getInstance(context: Context): DaywiseDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -66,7 +88,7 @@ abstract class DaywiseDatabase : RoomDatabase() {
                     DaywiseDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

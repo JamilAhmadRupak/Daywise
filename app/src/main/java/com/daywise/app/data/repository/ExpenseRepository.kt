@@ -1,8 +1,11 @@
 package com.daywise.app.data.repository
 
 import com.daywise.app.data.local.BudgetDao
+import com.daywise.app.data.local.CategoryDao
 import com.daywise.app.data.local.DebtDao
 import com.daywise.app.data.local.ExpenseDao
+import com.daywise.app.data.model.CategoryModel
+import com.daywise.app.data.model.CustomCategoryEntity
 import com.daywise.app.data.model.DebtEntity
 import com.daywise.app.data.model.ExpenseEntity
 import com.daywise.app.data.model.MonthlyBudgetEntity
@@ -10,6 +13,7 @@ import com.daywise.app.domain.util.BackupHelper
 import com.daywise.app.domain.util.DateUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.InputStream
 import java.io.OutputStream
@@ -18,8 +22,43 @@ import java.time.YearMonth
 class ExpenseRepository(
     private val expenseDao: ExpenseDao,
     private val budgetDao: BudgetDao,
-    private val debtDao: DebtDao
+    private val debtDao: DebtDao,
+    private val categoryDao: CategoryDao
 ) {
+
+    // --- CATEGORIES ---
+
+    fun getAllCategoriesFlow(): Flow<List<CategoryModel>> {
+        val builtIn = CategoryModel.getAllBuiltIn()
+        return categoryDao.getAllCustomCategoriesFlow().map { customEntities ->
+            val customModels = customEntities.map { CategoryModel.fromCustomEntity(it) }
+            val all = builtIn + customModels
+            CategoryModel.updateCustomCategories(all)
+            all
+        }
+    }
+
+    suspend fun getAllCategories(): List<CategoryModel> = withContext(Dispatchers.IO) {
+        val builtIn = CategoryModel.getAllBuiltIn()
+        val custom = categoryDao.getAllCustomCategories().map { CategoryModel.fromCustomEntity(it) }
+        val all = builtIn + custom
+        CategoryModel.updateCustomCategories(all)
+        all
+    }
+
+    suspend fun addCustomCategory(name: String, colorHex: Long, iconName: String) = withContext(Dispatchers.IO) {
+        categoryDao.insertCategory(
+            CustomCategoryEntity(
+                name = name.trim(),
+                colorHex = colorHex,
+                iconName = iconName
+            )
+        )
+    }
+
+    suspend fun deleteCustomCategory(name: String) = withContext(Dispatchers.IO) {
+        categoryDao.deleteCategory(name.trim())
+    }
 
     // --- EXPENSES ---
 

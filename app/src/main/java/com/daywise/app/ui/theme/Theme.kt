@@ -11,54 +11,39 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = GreenAccent,
-    onPrimary = BackgroundDark,
-    primaryContainer = GreenPrimaryDark,
-    onPrimaryContainer = GreenLight,
-    secondary = GreenAccent,
+private val DaywiseColorScheme = darkColorScheme(
+    primary = CyanPrimary,
+    onPrimary = LeafDeepNavy,
+    primaryContainer = HeroCardContainerDark,
+    onPrimaryContainer = LeafIceWhite,
+    secondary = CyanAccent,
     background = BackgroundDark,
     surface = SurfaceDark,
     surfaceVariant = SurfaceVariantDark,
-    onBackground = TextPrimaryDark,
-    onSurface = TextPrimaryDark,
-    onSurfaceVariant = TextSecondaryDark,
+    onBackground = LeafIceWhite,
+    onSurface = LeafIceWhite,
+    onSurfaceVariant = LeafPeriwinkle,
     error = ErrorRed,
     outline = BorderDark
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = GreenPrimary,
-    onPrimary = SurfaceLight,
-    primaryContainer = GreenContainerLight,
-    onPrimaryContainer = GreenOnContainerLight,
-    secondary = GreenPrimaryDark,
-    background = BackgroundLight,
-    surface = SurfaceLight,
-    surfaceVariant = SurfaceVariantLight,
-    onBackground = TextPrimaryLight,
-    onSurface = TextPrimaryLight,
-    onSurfaceVariant = TextSecondaryLight,
-    error = ErrorRed,
-    outline = BorderLight
-)
-
 @Composable
 fun DaywiseTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true, // Daywise is designed as an immersive dark aesthetic; keeps contrast pristine
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    // Always use DaywiseColorScheme to prevent system light mode from inverting text to black on dark cards
+    val colorScheme = DaywiseColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window ?: return@SideEffect
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.background.toArgb()
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+            window.navigationBarColor = android.graphics.Color.TRANSPARENT
             val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.isAppearanceLightStatusBars = !darkTheme
-            insetsController.isAppearanceLightNavigationBars = !darkTheme
+            insetsController.isAppearanceLightStatusBars = false
+            insetsController.isAppearanceLightNavigationBars = false
         }
     }
 

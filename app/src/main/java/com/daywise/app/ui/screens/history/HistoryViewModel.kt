@@ -136,27 +136,31 @@ class HistoryViewModel(
         )
     }
 
-    fun saveExpense(amountPaisa: Long, category: ExpenseCategory, dateMillis: Long, note: String) {
+    fun saveExpense(amountPaisa: Long, category: String, dateMillis: Long, note: String) {
         viewModelScope.launch {
             val editing = _dialogState.value.editingExpense
             if (editing != null) {
                 repository.updateExpense(
                     id = editing.id,
                     amountPaisa = amountPaisa,
-                    category = category.name,
+                    category = category,
                     dateMillis = dateMillis,
                     note = note
                 )
             } else {
                 repository.insertExpense(
                     amountPaisa = amountPaisa,
-                    category = category.name,
+                    category = category,
                     dateMillis = dateMillis,
                     note = note
                 )
             }
             closeAddEditSheet()
         }
+    }
+
+    fun saveExpense(amountPaisa: Long, category: ExpenseCategory, dateMillis: Long, note: String) {
+        saveExpense(amountPaisa, category.name, dateMillis, note)
     }
 
     fun confirmDeleteExpense(expense: ExpenseEntity) {

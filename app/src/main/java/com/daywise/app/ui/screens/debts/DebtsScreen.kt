@@ -1,8 +1,10 @@
 package com.daywise.app.ui.screens.debts
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Handshake
 import androidx.compose.material.icons.filled.Search
@@ -47,7 +50,9 @@ import androidx.compose.ui.unit.sp
 import com.daywise.app.domain.util.CurrencyFormatter
 import com.daywise.app.ui.components.AddEditDebtSheet
 import com.daywise.app.ui.components.ConfirmDeleteDialog
+import com.daywise.app.ui.components.DaywiseCard
 import com.daywise.app.ui.components.DebtItemCard
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,12 +64,12 @@ fun DebtsScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.Transparent,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.openAddDebt() },
                 containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
                 Icon(
@@ -102,13 +107,11 @@ fun DebtsScreen(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     // Net Balance Card
-                    Card(
+                    DaywiseCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        tintColor = Color(0xFF061424).copy(alpha = 0.58f)
                     ) {
                         Column(modifier = Modifier.padding(18.dp)) {
                             Text(
@@ -119,8 +122,8 @@ fun DebtsScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             val net = uiState.netBalancePaisa
                             val netColor = when {
-                                net > 0 -> Color(0xFF10B981) // Positive = you will receive more
-                                net < 0 -> Color(0xFFF97316) // Negative = you owe more
+                                net > 0 -> MaterialTheme.colorScheme.primary // Positive = you will receive more
+                                net < 0 -> Color(0xFFFB923C) // Negative = you owe more
                                 else -> MaterialTheme.colorScheme.onSurface
                             }
                             Text(
@@ -150,18 +153,17 @@ fun DebtsScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         // Lent Card
-                        Card(
+                        DaywiseCard(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFF10B981).copy(alpha = 0.12f)
-                            )
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)),
+                            tintColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
                                 Text(
                                     text = "To Receive (Lent)",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFF047857),
+                                    color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -171,24 +173,23 @@ fun DebtsScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp
                                     ),
-                                    color = Color(0xFF065F46)
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
 
                         // Borrowed Card
-                        Card(
+                        DaywiseCard(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFF97316).copy(alpha = 0.12f)
-                            )
+                            border = BorderStroke(1.dp, Color(0xFFFB923C).copy(alpha = 0.45f)),
+                            tintColor = Color(0xFFFB923C).copy(alpha = 0.12f)
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
                                 Text(
                                     text = "To Pay (Borrowed)",
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = Color(0xFFC2410C),
+                                    color = Color(0xFFFB923C),
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -198,7 +199,7 @@ fun DebtsScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp
                                     ),
-                                    color = Color(0xFF9A3412)
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
                         }
@@ -259,16 +260,55 @@ fun DebtsScreen(
                             }
                         }
                     }
+                    
+                    // Group By Selector
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Group by:",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        DebtGroupBy.entries.forEach { groupBy ->
+                            val isSelected = uiState.activeGroupBy == groupBy
+                            val label = when (groupBy) {
+                                DebtGroupBy.NONE -> "None"
+                                DebtGroupBy.PERSON -> "Person"
+                                DebtGroupBy.DATE -> "Date"
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isSelected) MaterialTheme.colorScheme.secondary else Color.Transparent,
+                                border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)) else null,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { viewModel.onGroupByChanged(groupBy) }
+                            ) {
+                                Text(
+                                    text = label,
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
             // Debts List
-            if (uiState.filteredDebts.isEmpty()) {
+            if (uiState.groupedDebts.isEmpty() || uiState.groupedDebts.all { it.items.isEmpty() }) {
                 item {
-                    Card(
+                    DaywiseCard(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                        tintColor = Color(0xFF061424).copy(alpha = 0.65f)
                     ) {
                         Column(
                             modifier = Modifier
@@ -299,13 +339,33 @@ fun DebtsScreen(
                     }
                 }
             } else {
-                items(uiState.filteredDebts, key = { it.id }) { debt ->
-                    DebtItemCard(
-                        debt = debt,
-                        onToggleSettled = { viewModel.toggleDebtSettled(debt) },
-                        onEdit = { viewModel.openEditDebt(debt) },
-                        onDelete = { viewModel.confirmDeleteDebt(debt) }
-                    )
+                uiState.groupedDebts.forEach { group ->
+                    if (group.isPersonGroup) {
+                        item(key = "person_header_${group.title}") {
+                            PersonGroupHeader(group = group)
+                        }
+                    } else if (group.isDateGroup) {
+                        item(key = "date_header_${group.title}") {
+                            DateGroupHeader(group = group)
+                        }
+                    } else if (group.title.isNotEmpty()) {
+                        item(key = "header_${group.title}") {
+                            Text(
+                                text = group.title,
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                            )
+                        }
+                    }
+                    items(group.items, key = { it.id }) { debt ->
+                        DebtItemCard(
+                            debt = debt,
+                            onToggleSettled = { viewModel.toggleDebtSettled(debt) },
+                            onEdit = { viewModel.openEditDebt(debt) },
+                            onDelete = { viewModel.confirmDeleteDebt(debt) }
+                        )
+                    }
                 }
             }
 
@@ -334,5 +394,220 @@ fun DebtsScreen(
             onConfirm = { viewModel.deleteConfirmed() },
             onDismiss = { viewModel.cancelDeleteDebt() }
         )
+    }
+}
+
+@Composable
+private fun PersonGroupHeader(group: DebtGroup) {
+    DaywiseCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+        tintColor = Color(0xFF061424).copy(alpha = 0.65f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = group.title.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = group.title,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${group.totalCount} ${if (group.totalCount == 1) "record" else "records"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                // Net indicator: to receive / to pay
+                val net = group.netPaisa
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = when {
+                        net > 0 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                        net < 0 -> Color(0xFFFB923C).copy(alpha = 0.15f)
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    border = BorderStroke(
+                        1.dp,
+                        when {
+                            net > 0 -> MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                            net < 0 -> Color(0xFFFB923C).copy(alpha = 0.4f)
+                            else -> MaterialTheme.colorScheme.outline
+                        }
+                    )
+                ) {
+                    Text(
+                        text = when {
+                            net > 0 -> "+${CurrencyFormatter.formatPaisa(net)} to receive"
+                            net < 0 -> "-${CurrencyFormatter.formatPaisa(abs(net))} to pay"
+                            else -> "Settled"
+                        },
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = when {
+                            net > 0 -> MaterialTheme.colorScheme.primary
+                            net < 0 -> Color(0xFFFB923C)
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Total Lent and Total Borrowed Breakdown Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Total Lent (${group.lentCount}):",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = CurrencyFormatter.formatPaisa(group.totalLentPaisa),
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Total Borrowed (${group.borrowedCount}):",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = CurrencyFormatter.formatPaisa(group.totalBorrowedPaisa),
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFFFB923C)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DateGroupHeader(group: DebtGroup) {
+    DaywiseCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 10.dp, bottom = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.45f)),
+        tintColor = Color(0xFF061424).copy(alpha = 0.65f)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = group.title,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Text(
+                    text = "${group.totalCount} ${if (group.totalCount == 1) "activity" else "activities"}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Day's Lent & Borrowed Activity Breakdown
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "${group.lentCount} lent:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = CurrencyFormatter.formatPaisa(group.totalLentPaisa),
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "${group.borrowedCount} borrowed:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = CurrencyFormatter.formatPaisa(group.totalBorrowedPaisa),
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color(0xFFFB923C)
+                    )
+                }
+            }
+        }
     }
 }

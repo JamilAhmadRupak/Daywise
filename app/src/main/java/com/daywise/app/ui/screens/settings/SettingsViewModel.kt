@@ -5,13 +5,17 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.daywise.app.data.model.CategoryModel
 import com.daywise.app.data.repository.ExpenseRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 
@@ -32,11 +36,34 @@ class SettingsViewModel(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
+    val customCategoriesFlow: StateFlow<List<CategoryModel>> =
+        repository.getAllCategoriesFlow()
+            .map { list -> list.filter { !it.isBuiltIn } }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
     private val _eventFlow = MutableSharedFlow<SettingsEvent>()
     val eventFlow: SharedFlow<SettingsEvent> = _eventFlow.asSharedFlow()
 
     init {
         loadStorageStats()
+    }
+
+    fun addCustomCategory(name: String, colorHex: Long, iconName: String) {
+        viewModelScope.launch {
+            repository.addCustomCategory(name, colorHex, iconName)
+            _eventFlow.emit(SettingsEvent.ShowToast("Category '$name' added!"))
+        }
+    }
+
+    fun deleteCustomCategory(name: String) {
+        viewModelScope.launch {
+            repository.deleteCustomCategory(name)
+            _eventFlow.emit(SettingsEvent.ShowToast("Category '$name' removed."))
+        }
     }
 
     fun loadStorageStats() {
